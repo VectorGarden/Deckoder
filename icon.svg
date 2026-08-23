@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Decklist converter">
+  <title>Decklist converter</title>
+  <rect width="64" height="64" rx="13" fill="#1B2436"/>
+  <rect x="17" y="9.5" width="28" height="41" rx="3.2" fill="#FBFCFD"/>
+  <rect x="22" y="17"   width="18" height="5" rx="1.3" fill="#C4711F"/>
+  <rect x="22" y="25.5" width="18" height="5" rx="1.3" fill="#12A192"/>
+  <rect x="22" y="34"   width="18" height="5" rx="1.3" fill="#B7398F"/>
+  <circle cx="47.5" cy="47.5" r="10.5" fill="#1B2436"/>
+  <g fill="#FBFCFD">
+    <rect x="42" y="44.6" width="8" height="1.8" rx=".9"/>
+    <path d="M49 42.4 L54 45.5 L49 48.6 Z"/>
+    <rect x="45" y="48.6" width="8" height="1.8" rx=".9"/>
+    <path d="M46 46.4 L41 49.5 L46 52.6 Z"/>
+  </g>
+</svg>

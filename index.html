@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%20width=%2264%22%20height=%2264%22%20role=%22img%22%20aria-label=%22Decklist%20converter%22%3E%3Crect%20width=%2264%22%20height=%2264%22%20rx=%2213%22%20fill=%22%231B2436%22/%3E%3Crect%20x=%2217%22%20y=%229.5%22%20width=%2228%22%20height=%2241%22%20rx=%223.2%22%20fill=%22%23FBFCFD%22/%3E%3Crect%20x=%2222%22%20y=%2217%22%20%20%20width=%2218%22%20height=%225%22%20rx=%221.3%22%20fill=%22%23C4711F%22/%3E%3Crect%20x=%2222%22%20y=%2225.5%22%20width=%2218%22%20height=%225%22%20rx=%221.3%22%20fill=%22%2312A192%22/%3E%3Crect%20x=%2222%22%20y=%2234%22%20%20%20width=%2218%22%20height=%225%22%20rx=%221.3%22%20fill=%22%23B7398F%22/%3E%3Ccircle%20cx=%2247.5%22%20cy=%2247.5%22%20r=%2210.5%22%20fill=%22%231B2436%22/%3E%3Cg%20fill=%22%23FBFCFD%22%3E%3Crect%20x=%2242%22%20y=%2244.6%22%20width=%228%22%20height=%221.8%22%20rx=%22.9%22/%3E%3Cpath%20d=%22M49%2042.4%20L54%2045.5%20L49%2048.6%20Z%22/%3E%3Crect%20x=%2245%22%20y=%2248.6%22%20width=%228%22%20height=%221.8%22%20rx=%22.9%22/%3E%3Cpath%20d=%22M46%2046.4%20L41%2049.5%20L46%2052.6%20Z%22/%3E%3C/g%3E%3C/svg%3E">
+<title>Deckoder — YDK / YDKE ⇄ registration JSON</title>
+<meta name="description" content="Deckoder converts Yu-Gi-Oh decklists between YDK, YDKE and tournament registration JSON, translating passcodes to Konami card IDs. Runs entirely in your browser.">
+<meta name="theme-color" content="#1B2436">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<meta property="og:title" content="Deckoder">
+<meta property="og:description" content="YDK / YDKE ⇄ tournament registration JSON. Passcodes translated to Konami card IDs, in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E4E7ED;
+    --sheet:#FBFCFD;
+    --ink:#15181E;
+    --ink-soft:#5A6373;
+    --rule:#C2C8D4;
+    --rule-hard:#8A93A5;
+    --monster:#A45A17;
+    --spell:#0B7F73;
+    --trap:#932C77;
+    --extra:#3B4CA8;
+    --side:#5A6373;
+    --alert:#B0202B;
+    --field:#1B2436;
+    --disp:"Barlow Condensed",Impact,"Haettenschweiler",sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
+    background-size:28px 28px;
+    background-position:-1px -1px;
+    color:var(--ink);
+    font:15px/1.5 var(--body);
+    padding:22px 16px 64px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+
+  /* ---------- masthead ---------- */
+  header.sheet{
+    background:var(--sheet);
+    border:2px solid var(--ink);
+    padding:18px 20px 14px;
+    position:relative;
+  }
+  header.sheet:after{
+    content:"";position:absolute;left:0;right:0;bottom:-6px;height:4px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 10px,transparent 10px 16px);
+  }
+  .mast{display:flex;align-items:center;gap:16px}
+  .mark{width:clamp(46px,7vw,62px);height:auto;flex:none}
+  h1{
+    font-family:var(--disp);font-weight:700;text-transform:uppercase;
+    font-size:clamp(30px,5.2vw,50px);line-height:.92;letter-spacing:.01em;margin:0;
+  }
+  h1 .thin{font-weight:500;color:var(--ink-soft)}
+  .subhead{
+    margin:10px 0 0;max-width:70ch;color:var(--ink-soft);font-size:14px;
+  }
+  .subhead code{font-family:var(--mono);font-size:12.5px;background:#EDF0F5;padding:1px 4px;border:1px solid var(--rule)}
+
+  /* ---------- generic panel ---------- */
+  .panel{background:var(--sheet);border:2px solid var(--ink);margin-top:22px}
+  .panel > .bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    border-bottom:2px solid var(--ink);padding:7px 14px;background:var(--ink);color:var(--sheet);
+  }
+  .bar h2{
+    font-family:var(--disp);text-transform:uppercase;font-weight:600;letter-spacing:.06em;
+    font-size:19px;margin:0;
+  }
+  .bar .spacer{flex:1}
+  .bar .note{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:#AEB7C7;text-transform:uppercase}
+  .body{padding:16px}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .cols > div{padding:16px}
+  .cols > div:first-child{border-right:2px solid var(--ink)}
+  @media(max-width:860px){
+    .cols{grid-template-columns:1fr}
+    .cols > div:first-child{border-right:0;border-bottom:2px solid var(--ink)}
+  }
+
+  label.fld{display:block;font-family:var(--disp);text-transform:uppercase;letter-spacing:.07em;
+    font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 5px}
+  textarea,input[type=text]{
+    width:100%;font-family:var(--mono);font-size:13px;color:var(--ink);
+    background:#fff;border:1px solid var(--rule-hard);padding:9px 10px;border-radius:0;
+  }
+  textarea{min-height:210px;resize:vertical;line-height:1.45}
+  textarea:focus,input:focus,button:focus-visible,.tab:focus-visible{outline:2px solid var(--field);outline-offset:1px}
+  .dropping{background:#EAF4F2;box-shadow:inset 0 0 0 3px var(--spell)}
+
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  button{
+    font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-weight:600;font-size:14px;
+    background:var(--sheet);color:var(--ink);border:1.5px solid var(--ink);padding:7px 13px;cursor:pointer;
+    border-radius:0;transition:background .12s,color .12s;
+  }
+  button:hover{background:var(--ink);color:var(--sheet)}
+  button.primary{background:var(--field);color:#fff;border-color:var(--field);padding:9px 20px;font-size:16px}
+  button.primary:hover{background:#0E1524}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost{border-color:var(--rule-hard);color:var(--ink-soft);font-size:12.5px;padding:5px 9px}
+  button.ghost:hover{background:var(--ink-soft);color:#fff}
+
+  /* ---------- direction stamp (signature) ---------- */
+  .stamp{
+    display:inline-flex;align-items:center;gap:9px;border:2px solid var(--field);color:var(--field);
+    padding:5px 12px;font-family:var(--disp);text-transform:uppercase;letter-spacing:.1em;font-weight:700;
+    font-size:15px;transform:rotate(-1.4deg);background:#fff;
+  }
+  .stamp .arrow{font-family:var(--mono);font-weight:600;letter-spacing:0}
+  .stamp.idle{border-color:var(--rule-hard);color:var(--ink-soft)}
+
+  /* ---------- decklist sheet ---------- */
+  .sect{border-top:1px solid var(--rule)}
+  .sect:first-child{border-top:0}
+  .sect-h{
+    display:flex;align-items:baseline;gap:10px;padding:8px 12px 6px;
+    border-left:7px solid var(--c,var(--ink-soft));background:#F2F4F8;
+  }
+  .sect-h b{font-family:var(--disp);text-transform:uppercase;letter-spacing:.09em;font-size:16px;color:var(--c)}
+  .sect-h span{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  td{padding:5px 8px;border-bottom:1px dotted var(--rule);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  td.qty{
+    width:42px;text-align:center;font-family:var(--mono);font-weight:600;
+    border-right:1px solid var(--rule);color:var(--ink)
+  }
+  td.src,td.dst{width:106px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+  td.dst{color:var(--ink);font-weight:500}
+  td.arw{width:26px;text-align:center;color:var(--rule-hard);font-family:var(--mono)}
+  td.nm{font-weight:500}
+  tr.bad td.nm{color:var(--alert)}
+  tr.bad td.dst input{width:100%;font-family:var(--mono);font-size:12px;padding:3px 5px;border:1px solid var(--alert)}
+  .flag{
+    font-family:var(--disp);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;
+    color:var(--alert);border:1.5px solid var(--alert);padding:0 5px;margin-left:8px;white-space:nowrap
+  }
+
+  /* ---------- output ---------- */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:12px}
+  .tab{
+    font-family:var(--disp);text-transform:uppercase;letter-spacing:.07em;font-weight:600;font-size:14px;
+    padding:6px 14px;border:0;border-bottom:3px solid transparent;background:none;cursor:pointer;color:var(--ink-soft);
+  }
+  .tab:hover{background:#EDF0F5;color:var(--ink)}
+  .tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--field)}
+  pre.out{
+    background:#fff;border:1px solid var(--rule-hard);padding:12px;margin:0;
+    font-family:var(--mono);font-size:12.5px;line-height:1.5;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-all;
+  }
+  .counts{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0 0;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .counts b{color:var(--ink);font-weight:600}
+  .counts .warn{color:var(--alert)}
+
+  .msg{margin-top:12px;padding:9px 12px;border-left:5px solid var(--alert);background:#FBEDEE;font-size:13.5px}
+  .msg.ok{border-color:var(--spell);background:#E9F4F2}
+  .msg.work{border-color:var(--field);background:#EDEFF6}
+  .msg:empty{display:none}
+  .msg code{font-family:var(--mono);font-size:12px}
+
+  details.adv{margin-top:22px;background:var(--sheet);border:2px solid var(--ink)}
+  details.adv summary{
+    padding:8px 14px;cursor:pointer;font-family:var(--disp);text-transform:uppercase;
+    letter-spacing:.07em;font-weight:600;font-size:15px;
+  }
+  details.adv[open] summary{border-bottom:1px solid var(--rule)}
+  details.adv .body p{margin:0 0 10px;font-size:13.5px;color:var(--ink-soft);max-width:78ch}
+  footer{margin-top:26px;font-size:12px;color:var(--ink-soft);font-family:var(--mono);text-align:center}
+  .hide{display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="sheet">
+  <div class="mast">
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="13" fill="#1B2436"/>
+      <rect x="17" y="9.5" width="28" height="41" rx="3.2" fill="#FBFCFD"/>
+      <rect x="22" y="17" width="18" height="5" rx="1.3" fill="#C4711F"/>
+      <rect x="22" y="25.5" width="18" height="5" rx="1.3" fill="#12A192"/>
+      <rect x="22" y="34" width="18" height="5" rx="1.3" fill="#B7398F"/>
+      <circle cx="47.5" cy="47.5" r="10.5" fill="#1B2436"/>
+      <g fill="#FBFCFD">
+        <rect x="42" y="44.6" width="8" height="1.8" rx=".9"/>
+        <path d="M49 42.4 L54 45.5 L49 48.6 Z"/>
+        <rect x="45" y="48.6" width="8" height="1.8" rx=".9"/>
+        <path d="M46 46.4 L41 49.5 L46 52.6 Z"/>
+      </g>
+    </svg>
+    <h1>Deckoder<br><span class="thin">YDK / YDKE ⇄ registration JSON</span></h1>
+  </div>
+  <p class="subhead">Every decklist format says the same thing in a different language. Drop a <code>.ydk</code>, paste a <code>ydke://</code> URI, or drop a registration <code>.json</code>. Passcodes are translated to Konami <code>CardDatabaseId</code> values (and back) using the YGOPRODeck card database. Everything runs in this page — nothing is uploaded anywhere.</p>
+</header>
+
+<section class="panel">
+  <div class="bar"><h2>1 · Source</h2><div class="spacer"></div><span class="note" id="detected">awaiting input</span></div>
+  <div class="cols">
+    <div id="dropzone">
+      <label class="fld" for="input">Paste a decklist</label>
+      <textarea id="input" spellcheck="false" placeholder="#main
+80611581
+54334420
+...
+
+— or —
+
+ydke://LzMBBS8zAQU=...!...!...!
+
+— or —
+
+{&quot;Name&quot;:&quot;My deck&quot;,&quot;Monsters&quot;:[{&quot;CardDatabaseId&quot;:20207,&quot;Quantity&quot;:3}], ... }"></textarea>
+      <div class="row">
+        <button id="pick">Choose file…</button>
+        <input type="file" id="file" accept=".ydk,.json,.txt,application/json,text/plain" class="hide">
+        <button class="ghost" id="clear">Clear</button>
+        <span style="font-size:12.5px;color:var(--ink-soft)">or drop a file on this panel</span>
+      </div>
+    </div>
+    <div>
+      <label class="fld" for="deckname">Deck name <span style="text-transform:none;letter-spacing:0;font-family:var(--body)">(goes in the JSON <code style="font-family:var(--mono)">Name</code> field)</span></label>
+      <input type="text" id="deckname" placeholder="Tenpai [YCS Anaheim] - v4">
+      <div class="row" style="margin-top:18px">
+        <div class="stamp idle" id="stamp"><span id="stampFrom">—</span><span class="arrow">→</span><span id="stampTo">—</span></div>
+      </div>
+      <div class="row" style="margin-top:18px">
+        <button class="primary" id="go">Convert</button>
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="minify" checked> minify JSON output
+        </label>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel hide" id="resultPanel">
+  <div class="bar"><h2>2 · Result</h2><div class="spacer"></div><span class="note" id="resnote"></span></div>
+  <div class="body">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="json" aria-selected="true">JSON</button>
+      <button class="tab" role="tab" data-tab="ydk" aria-selected="false">YDK</button>
+      <button class="tab" role="tab" data-tab="ydke" aria-selected="false">YDKE</button>
+    </div>
+    <pre class="out" id="out"></pre>
+    <div class="row">
+      <button id="copy">Copy</button>
+      <button id="download">Download</button>
+    </div>
+    <div class="counts" id="counts"></div>
+  </div>
+</section>
+
+<section class="panel hide" id="sheetPanel">
+  <div class="bar"><h2>3 · Card-by-card check</h2><div class="spacer"></div><span class="note">verify names before you register</span></div>
+  <div id="sheet"></div>
+</section>
+
+<details class="adv">
+  <summary>Lookup table &amp; offline use</summary>
+  <div class="body">
+    <p>Every card this page resolves is kept in a local lookup table, so repeat conversions are instant and work offline. Export it once and you never need the network again — reimport it on another machine, or on a tournament laptop with no wifi.</p>
+    <div class="row">
+      <button class="ghost" id="exportMap">Export lookup table</button>
+      <button class="ghost" id="importMap">Import lookup table</button>
+      <input type="file" id="mapFile" accept=".json" class="hide">
+      <button class="ghost" id="loadAll">Load full card database</button>
+      <button class="ghost" id="clearMap">Clear table</button>
+      <span id="mapStat" style="font-family:var(--mono);font-size:12px;color:var(--ink-soft)"></span>
+    </div>
+    <p style="margin-top:12px">“Load full card database” pulls every card in one request (tens of megabytes). You only need it if you convert JSON → YDK for cards you’ve never looked up before and the per-card lookup isn’t available.</p>
+  </div>
+</details>
+
+<footer>Deckoder · card data from the YGOPRODeck API · <code>CardDatabaseId</code> = Konami card ID (<code>cid</code>), not the 8-digit passcode</footer>
+</div>
+
+<script>
+/* ============================================================
+   storage — falls back to memory if localStorage is unavailable
+   ============================================================ */
+const KEY='deckoder.lookup.v1';
+let persist=true;
+function loadMap(){
+  try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):{};}
+  catch(e){persist=false;return{};}
+}
+function saveMap(){
+  if(!persist)return;
+  try{localStorage.setItem(KEY,JSON.stringify(MAP));}catch(e){persist=false;stat();}
+}
+/* MAP: passcode -> {cid, name, type}   plus reverse index built on demand */
+let MAP=loadMap();
+let REV=null;
+function rev(){
+  if(REV)return REV;
+  REV={};
+  for(const p in MAP){const c=MAP[p].cid;if(c&&!REV[c])REV[c]=+p;}
+  return REV;
+}
+function remember(pass,cid,name,type){
+  MAP[String(pass)]={cid:cid?+cid:null,name:name||'',type:type||''};
+  REV=null;
+}
+function stat(){
+  const n=Object.keys(MAP).length;
+  $('mapStat').textContent=n+' card'+(n===1?'':'s')+' known · '+(persist?'saved on this device':'memory only (private mode?)');
+}
+
+/* ============================================================
+   helpers
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const TYPES=['Monsters','Spells','Traps'];
+function say(text,kind){const m=$('msg');m.className='msg'+(kind?' '+kind:'');m.innerHTML=text||'';}
+
+/* ---------- YDK ---------- */
+function parseYdk(text){
+  const d={main:[],extra:[],side:[]};
+  let cur='main';
+  for(let line of text.split(/\r?\n/)){
+    line=line.trim();
+    if(!line)continue;
+    const low=line.toLowerCase();
+    if(low.startsWith('#main')){cur='main';continue;}
+    if(low.startsWith('#extra')){cur='extra';continue;}
+    if(low.startsWith('!side')||low.startsWith('#side')){cur='side';continue;}
+    if(line[0]==='#'||line[0]==='!')continue;
+    const n=parseInt(line,10);
+    if(Number.isFinite(n)&&n>0)d[cur].push(n);
+  }
+  return d;
+}
+function buildYdk(d,name){
+  const L=[];
+  if(name)L.push('#created by '+name);
+  L.push('#main',...d.main.map(String),'#extra',...d.extra.map(String),'!side',...d.side.map(String));
+  return L.join('\n')+'\n';
+}
+
+/* ---------- YDKE ---------- */
+function b64ToIds(b64){
+  const bin=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  if(bytes.length%4)throw new Error('YDKE section is not a whole number of card IDs.');
+  const dv=new DataView(bytes.buffer),out=[];
+  for(let i=0;i<bytes.length;i+=4)out.push(dv.getUint32(i,true)); /* little-endian */
+  return out;
+}
+function idsToB64(ids){
+  const buf=new ArrayBuffer(ids.length*4),dv=new DataView(buf);
+  ids.forEach((id,i)=>dv.setUint32(i*4,id>>>0,true));
+  let s='';new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));
+  return btoa(s);
+}
+function parseYdke(uri){
+  const body=uri.trim().replace(/^ydke:\/\//i,'');
+  const parts=body.split('!');
+  if(parts.length<3)throw new Error('A YDKE URI needs three “!”-separated sections: main!extra!side!');
+  return{main:b64ToIds(parts[0]),extra:b64ToIds(parts[1]),side:b64ToIds(parts[2])};
+}
+function buildYdke(d){
+  return'ydke://'+idsToB64(d.main)+'!'+idsToB64(d.extra)+'!'+idsToB64(d.side)+'!';
+}
+
+/* ---------- registration JSON ---------- */
+function parseReg(obj){
+  const grab=k=>Array.isArray(obj[k])?obj[k]:[];
+  const flat=a=>{const o=[];a.forEach(e=>{const q=Math.max(1,+e.Quantity||1);for(let i=0;i<q;i++)o.push(+e.CardDatabaseId);});return o;};
+  return{
+    name:obj.Name||'',
+    groups:{Monsters:grab('Monsters'),Spells:grab('Spells'),Traps:grab('Traps'),Extra:grab('Extra'),Side:grab('Side')},
+    cids:{main:[...flat(grab('Monsters')),...flat(grab('Spells')),...flat(grab('Traps'))],
+          extra:flat(grab('Extra')),side:flat(grab('Side'))}
+  };
+}
+function tally(ids){            /* preserve first-seen order, collapse duplicates */
+  const order=[],count=new Map();
+  ids.forEach(id=>{if(!count.has(id)){count.set(id,0);order.push(id);}count.set(id,count.get(id)+1);});
+  return order.map(id=>({id,qty:count.get(id)}));
+}
+
+/* ============================================================
+   card lookups (YGOPRODeck)
+   ============================================================ */
+const API='https://db.ygoprodeck.com/api/v7/cardinfo.php';
+async function api(qs){
+  const r=await fetch(API+qs);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  if(!j.data)throw new Error(j.error||'no data');
+  return j.data;
+}
+function kind(card){
+  const t=(card.type||'').toLowerCase();
+  if(t.includes('spell'))return'Spells';
+  if(t.includes('trap'))return'Traps';
+  return'Monsters';
+}
+function index(cards){
+  cards.forEach(c=>{
+    const cid=(c.misc_info||[]).map(m=>m.konami_id).find(v=>v!=null);
+    remember(c.id,cid,c.name,kind(c));
+    (c.card_images||[]).forEach(img=>{if(img.id!==c.id)remember(img.id,cid,c.name,kind(c));});
+  });
+}
+/* by passcode — batched, bisecting around IDs the API doesn't know */
+async function byPasscodes(ids){
+  const need=[...new Set(ids)].filter(id=>!MAP[id]);
+  const bad=[];
+  async function go(list){
+    if(!list.length)return;
+    try{index(await api('?misc=yes&id='+list.join(',')));}
+    catch(e){
+      if(list.length===1){bad.push(list[0]);return;}
+      const m=Math.ceil(list.length/2);
+      await go(list.slice(0,m));await go(list.slice(m));
+    }
+  }
+  for(let i=0;i<need.length;i+=60)await go(need.slice(i,i+60));
+  saveMap();stat();
+  return bad;
+}
+/* by Konami cid — one request each, small concurrency */
+async function byCids(cids){
+  const R=rev();
+  const need=[...new Set(cids)].filter(c=>!R[c]);
+  const bad=[];let dead=0;
+  const queue=need.slice();
+  async function worker(){
+    while(queue.length){
+      const cid=queue.shift();
+      try{index(await api('?misc=yes&konami_id='+cid));}
+      catch(e){bad.push(cid);dead++;}
+      if(dead>=4&&bad.length===dead){queue.length=0;}   /* lookup endpoint clearly unavailable */
+    }
+  }
+  await Promise.all([worker(),worker(),worker()]);
+  saveMap();stat();REV=null;
+  return{bad,unsupported:dead>=4&&bad.length===dead};
+}
+
+/* ============================================================
+   conversion
+   ============================================================ */
+let RESULT=null;   /* {json,ydk,ydke,name} */
+
+function detect(text){
+  const t=text.trim();
+  if(!t)return null;
+  if(/^ydke:\/\//i.test(t))return'ydke';
+  if(t[0]==='{'||t[0]==='[')return'json';
+  return'ydk';
+}
+function setStamp(from,to){
+  const s=$('stamp');
+  s.classList.toggle('idle',!from);
+  $('stampFrom').textContent=from||'—';
+  $('stampTo').textContent=to||'—';
+}
+$('input').addEventListener('input',()=>{
+  const f=detect($('input').value);
+  $('detected').textContent=f?('detected: '+f.toUpperCase()):'awaiting input';
+  if(f==='json')setStamp('JSON','YDK / YDKE');
+  else if(f)setStamp(f.toUpperCase(),'JSON');
+  else setStamp(null,null);
+});
+
+async function convert(){
+  const raw=$('input').value.trim();
+  if(!raw){say('Paste a decklist or drop a file first.');return;}
+  $('go').disabled=true;
+  try{
+    const fmt=detect(raw);
+    let deck,name=$('deckname').value.trim(),groups=null,unresolved=[];
+
+    if(fmt==='json'){
+      /* ---------- JSON → passcodes ---------- */
+      let obj;
+      try{obj=JSON.parse(raw);}catch(e){throw new Error('That isn’t valid JSON. '+e.message);}
+      const reg=parseReg(obj);
+      if(!name)name=reg.name;
+      const all=[...reg.cids.main,...reg.cids.extra,...reg.cids.side];
+      if(!all.length)throw new Error('No cards found. Expected <code>Monsters</code>, <code>Spells</code>, <code>Traps</code>, <code>Extra</code>, <code>Side</code> arrays of <code>{CardDatabaseId, Quantity}</code>.');
+      say('Looking up '+new Set(all).size+' cards…','work');
+      const res=await byCids(all);
+      if(res.unsupported)say('Per-card lookup by Konami ID isn’t answering. Open <b>Lookup table &amp; offline use</b> and choose <b>Load full card database</b>, then convert again.','');
+      const R=rev();
+      const map=c=>{const p=R[c];if(!p)unresolved.push(c);return p||0;};
+      deck={main:reg.cids.main.map(map),extra:reg.cids.extra.map(map),side:reg.cids.side.map(map)};
+      groups=reg.groups;
+    }else{
+      /* ---------- YDK / YDKE → cids ---------- */
+      deck=fmt==='ydke'?parseYdke(raw):parseYdk(raw);
+      if(!deck.main.length&&!deck.extra.length&&!deck.side.length)
+        throw new Error('No card IDs found. A YDK file looks like <code>#main</code> followed by one 8-digit passcode per line.');
+      if(!name){const m=raw.match(/^#created by (.+)$/mi);name=m?m[1].trim():'';}
+      const all=[...deck.main,...deck.extra,...deck.side];
+      say('Looking up '+new Set(all).size+' cards…','work');
+      const bad=await byPasscodes(all);
+      unresolved=all.filter(id=>!MAP[id]||MAP[id].cid==null);
+    }
+
+    /* ---------- build every output ---------- */
+    if(!groups){
+      groups={Monsters:[],Spells:[],Traps:[],Extra:[],Side:[]};
+      const push=(k,id,qty)=>groups[k].push({CardDatabaseId:MAP[id]?.cid??0,Quantity:qty});
+      tally(deck.main).forEach(({id,qty})=>push(MAP[id]?.type||'Monsters',id,qty));
+      tally(deck.extra).forEach(({id,qty})=>push('Extra',id,qty));
+      tally(deck.side).forEach(({id,qty})=>push('Side',id,qty));
+    }
+    const json={Name:name||'Untitled deck',Monsters:groups.Monsters,Spells:groups.Spells,Traps:groups.Traps,Side:groups.Side,Extra:groups.Extra};
+    RESULT={json,ydk:buildYdk(deck,name),ydke:buildYdke(deck),name:name||'decklist',deck,groups,unresolved:[...new Set(unresolved)]};
+    render();
+    if(RESULT.unresolved.length)
+      say('<b>'+RESULT.unresolved.length+' card'+(RESULT.unresolved.length===1?'':'s')+' couldn’t be matched.</b> They’re flagged in red below — type the correct ID into the red box to fix it and the page will remember it.','');
+    else
+      say('Converted. Check the names in section 3, then download.','ok');
+  }catch(e){
+    say('<b>'+e.message+'</b>'+(/fetch|Failed|NetworkError/i.test(e.message)?' — the card database couldn’t be reached. Check your connection, or import a lookup table for offline use.':''));
+  }finally{$('go').disabled=false;}
+}
+
+/* ============================================================
+   rendering
+   ============================================================ */
+let TAB='json';
+function fmtOut(){
+  if(!RESULT)return'';
+  if(TAB==='json')return $('minify').checked?JSON.stringify(RESULT.json):JSON.stringify(RESULT.json,null,2);
+  return RESULT[TAB];
+}
+function render(){
+  $('resultPanel').classList.remove('hide');
+  $('sheetPanel').classList.remove('hide');
+  $('out').textContent=fmtOut();
+  $('deckname').value=RESULT.json.Name==='Untitled deck'?$('deckname').value:RESULT.json.Name;
+
+  /* counts + legality */
+  const m=RESULT.deck.main.length,e=RESULT.deck.extra.length,s=RESULT.deck.side.length;
+  const bad=n=>n?' warn':'';
+  $('counts').innerHTML=
+    '<span class="'+((m<40||m>60)?'warn':'')+'">MAIN <b>'+m+'</b>'+((m<40||m>60)?' (needs 40–60)':'')+'</span>'+
+    '<span class="'+(e>15?'warn':'')+'">EXTRA <b>'+e+'</b>'+(e>15?' (max 15)':'')+'</span>'+
+    '<span class="'+(s>15?'warn':'')+'">SIDE <b>'+s+'</b>'+(s>15?' (max 15)':'')+'</span>'+
+    '<span>UNIQUE <b>'+new Set([...RESULT.deck.main,...RESULT.deck.extra,...RESULT.deck.side]).size+'</b></span>';
+  $('resnote').textContent=RESULT.name;
+  renderSheet();
+}
+const COLOR={Monsters:'var(--monster)',Spells:'var(--spell)',Traps:'var(--trap)',Extra:'var(--extra)',Side:'var(--side)'};
+function renderSheet(){
+  const back=detect($('input').value)==='json';
+  const sect=(title,key,rows)=>{
+    if(!rows.length)return'';
+    const total=rows.reduce((a,r)=>a+r.qty,0);
+    let h='<div class="sect"><div class="sect-h" style="--c:'+COLOR[key]+'"><b>'+title+'</b><span>'+total+' cards · '+rows.length+' unique</span></div><table>';
+    rows.forEach(r=>{
+      const known=r.pass&&MAP[r.pass];
+      const nameTxt=known?MAP[r.pass].name:'<i>not found</i>';
+      const ok=r.pass&&r.cid;
+      h+='<tr class="'+(ok?'':'bad')+'">'
+        +'<td class="qty">'+r.qty+'</td>'
+        +'<td class="src">'+(back?(r.cid||'—'):(r.pass||'—'))+'</td>'
+        +'<td class="nm">'+nameTxt+(ok?'':'<span class="flag">check</span>')+'</td>'
+        +'<td class="arw">→</td>'
+        +'<td class="dst">'+(ok?(back?r.pass:r.cid)
+            :'<input type="text" inputmode="numeric" placeholder="'+(back?'passcode':'CardDatabaseId')+'" data-fix="'+(back?r.cid:r.pass)+'" data-back="'+(back?1:0)+'">')
+        +'</td></tr>';
+    });
+    return h+'</table></div>';
+  };
+  const rowsFor=ids=>tally(ids).map(({id,qty})=>{
+    if(detect($('input').value)==='json'){const p=rev()[id];return{cid:id,pass:p,qty};}
+    return{pass:id,cid:MAP[id]?.cid,qty};
+  });
+  const main=rowsFor(RESULT.deck.main);
+  const byType=k=>main.filter(r=>r.pass&&MAP[r.pass]?.type===k);
+  let html;
+  if(back){
+    /* keep the JSON's own grouping when we came from JSON */
+    const g=RESULT.groups,pull=a=>a.map(x=>({cid:+x.CardDatabaseId,pass:rev()[+x.CardDatabaseId],qty:+x.Quantity||1}));
+    html=sect('Monsters','Monsters',pull(g.Monsters))+sect('Spells','Spells',pull(g.Spells))+sect('Traps','Traps',pull(g.Traps))
+        +sect('Extra deck','Extra',pull(g.Extra))+sect('Side deck','Side',pull(g.Side));
+  }else{
+    const untyped=main.filter(r=>!r.pass||!MAP[r.pass]);
+    html=sect('Monsters','Monsters',byType('Monsters'))+sect('Spells','Spells',byType('Spells'))+sect('Traps','Traps',byType('Traps'))
+        +sect('Unmatched','Side',untyped)
+        +sect('Extra deck','Extra',rowsFor(RESULT.deck.extra))+sect('Side deck','Side',rowsFor(RESULT.deck.side));
+  }
+  $('sheet').innerHTML=html;
+  $('sheet').querySelectorAll('input[data-fix]').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const v=parseInt(inp.value,10);if(!Number.isFinite(v))return;
+      const key=inp.dataset.fix,back=inp.dataset.back==='1';
+      if(back)remember(v,+key,MAP[v]?.name||'(manual entry)',MAP[v]?.type||'Monsters');
+      else remember(+key,v,MAP[key]?.name||'(manual entry)',MAP[key]?.type||'Monsters');
+      saveMap();stat();convert();
+    });
+  });
+}
+
+/* ============================================================
+   wiring
+   ============================================================ */
+$('go').onclick=convert;
+$('pick').onclick=()=>$('file').click();
+$('clear').onclick=()=>{$('input').value='';$('input').dispatchEvent(new Event('input'));
+  $('resultPanel').classList.add('hide');$('sheetPanel').classList.add('hide');say('');};
+$('file').onchange=e=>{if(e.target.files[0])readFile(e.target.files[0]);};
+function readFile(f){
+  const r=new FileReader();
+  r.onload=()=>{
+    $('input').value=r.result;
+    $('input').dispatchEvent(new Event('input'));
+    if(!$('deckname').value)$('deckname').value=f.name.replace(/\.(ydk|json|txt)$/i,'');
+    convert();
+  };
+  r.readAsText(f);
+}
+const dz=$('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('dropping');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('dropping');}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)readFile(f);});
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));
+  TAB=t.dataset.tab;$('out').textContent=fmtOut();
+});
+$('minify').onchange=()=>{if(RESULT)$('out').textContent=fmtOut();};
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(fmtOut());$('copy').textContent='Copied';setTimeout(()=>$('copy').textContent='Copy',1200);}
+  catch(e){const r=document.createRange();r.selectNode($('out'));getSelection().removeAllRanges();getSelection().addRange(r);}
+};
+function save(text,fname,mime){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/plain'}));
+  a.download=fname;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+$('download').onclick=()=>{
+  if(!RESULT)return;
+  const safe=(RESULT.name||'decklist').replace(/[\\/:*?"<>|]/g,'_');
+  if(TAB==='json')save(fmtOut(),safe+'.json','application/json');
+  else if(TAB==='ydk')save(RESULT.ydk,safe+'.ydk');
+  else save(RESULT.ydke,safe+'.ydke.txt');
+};
+
+/* lookup table controls */
+$('exportMap').onclick=()=>save(JSON.stringify(MAP),'deckoder-lookup.json','application/json');
+$('importMap').onclick=()=>$('mapFile').click();
+$('mapFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{Object.assign(MAP,JSON.parse(r.result));REV=null;saveMap();stat();say('Lookup table imported.','ok');}
+                catch(err){say('That file isn’t a lookup table.');}};
+  r.readAsText(f);
+};
+$('clearMap').onclick=()=>{MAP={};REV=null;saveMap();try{localStorage.removeItem(KEY)}catch(e){};stat();say('Lookup table cleared.','ok');};
+$('loadAll').onclick=async()=>{
+  const b=$('loadAll');b.disabled=true;b.textContent='Downloading…';
+  say('Downloading the full card database. This is a large file — give it a minute.','work');
+  try{index(await api('?misc=yes'));saveMap();stat();say('Full database loaded. Convert again.','ok');}
+  catch(e){say('Couldn’t download the database: '+e.message);}
+  finally{b.disabled=false;b.textContent='Load full card database';}
+};
+stat();
+</script>
+</body>
+</html>
