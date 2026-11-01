@@ -132,7 +132,7 @@
     display:flex;align-items:baseline;gap:10px;padding:8px 12px 6px;
     border-left:7px solid var(--c,var(--ink-soft));background:#F2F4F8;
   }
-  .sect-h b{font-family:var(--disp);text-transform:uppercase;letter-spacing:.09em;font-size:16px;color:var(--c)}
+  .sect-h b{white-space:nowrap;font-family:var(--disp);text-transform:uppercase;letter-spacing:.09em;font-size:16px;color:var(--c)}
   .sect-h span{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   td{padding:5px 8px;border-bottom:1px dotted var(--rule);vertical-align:middle}
@@ -150,6 +150,50 @@
   .flag{
     font-family:var(--disp);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;
     color:var(--alert);border:1.5px solid var(--alert);padding:0 5px;margin-left:8px;white-space:nowrap
+  }
+
+  /* ---------- deck view ---------- */
+  .seg{display:flex}
+  .seg button{
+    font-size:12.5px;padding:3px 10px;background:transparent;color:#AEB7C7;border-color:#4A5468;
+  }
+  .seg button + button{border-left:0}
+  .seg button:hover{background:#2A3346;color:var(--sheet)}
+  .seg button[aria-pressed=true]{background:var(--sheet);color:var(--ink);border-color:var(--sheet)}
+  .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;padding:10px 12px 14px}
+  button.ct{
+    position:relative;display:block;width:100%;aspect-ratio:59/86;padding:0;overflow:hidden;
+    background:var(--c,var(--side));border:0;border-radius:2px;transition:transform .12s;
+  }
+  button.ct:hover,button.ct:focus-visible{background:var(--c,var(--side));transform:translateY(-3px);outline:2px solid var(--ink);outline-offset:1px}
+  .ct .fb,.pop .fb{
+    position:absolute;inset:0;display:flex;align-items:flex-end;padding:5px;text-align:left;
+    font-family:var(--disp);text-transform:uppercase;letter-spacing:.03em;font-size:11px;line-height:1.05;color:#fff;
+  }
+  .ct img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}
+  .ct img.in{opacity:1}
+  button.ct.bad,button.ct.bad:hover{background:#FBEDEE;box-shadow:inset 0 0 0 2px var(--alert)}
+  .ct.bad .fb{color:var(--alert)}
+
+  .pop{
+    position:fixed;z-index:20;left:0;top:0;width:min(460px,calc(100vw - 32px));max-height:min(72vh,540px);
+    display:grid;grid-template-columns:132px 1fr;gap:14px;padding:12px;
+    background:var(--sheet);border:2px solid var(--ink);box-shadow:6px 6px 0 rgba(21,24,30,.18);pointer-events:none;
+  }
+  .pop.pinned{pointer-events:auto}
+  .pop.hide{display:none}
+  .pop .art{width:100%;aspect-ratio:59/86;background:var(--c,var(--side));position:relative;overflow:hidden;border-radius:2px}
+  .pop .art img{width:100%;height:100%;object-fit:cover;display:block}
+  .pop .pb{min-width:0;display:flex;flex-direction:column;gap:5px;min-height:0}
+  .pop h3{margin:0;padding-right:22px;font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.05;text-transform:uppercase}
+  .pop .tl{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em}
+  .pop .st{font-family:var(--mono);font-size:12.5px;font-weight:600}
+  .pop .tx{font-size:13px;line-height:1.45;white-space:pre-line;overflow:auto;min-height:0;border-top:1px dotted var(--rule);padding-top:6px}
+  .pop .ids{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .pop .x{position:absolute;top:6px;right:6px;padding:0 7px;font-size:16px;line-height:1.3;border-color:var(--rule-hard)}
+  .pop:not(.pinned) .x{display:none}
+  @media(max-width:600px){
+    .pop{left:0!important;top:auto!important;bottom:0;width:100%;max-height:62vh;grid-template-columns:96px 1fr;border-width:2px 0 0}
   }
 
   /* ---------- output ---------- */
@@ -269,9 +313,15 @@ ydke://LzMBBS8zAQU=...!...!...!
 </section>
 
 <section class="panel hide" id="sheetPanel">
-  <div class="bar"><h2>3 · Card-by-card check</h2><div class="spacer"></div><span class="note">verify names before you register</span></div>
-  <div id="sheet"></div>
+  <div class="bar">
+    <h2 id="sheetTitle">3 · Deck</h2>
+    <div class="seg"><button type="button" data-view="deck" aria-pressed="true">Deck</button><button type="button" data-view="list" aria-pressed="false">Check list</button></div>
+    <div class="spacer"></div><span class="note" id="sheetNote"></span>
+  </div>
+  <div id="deck"></div>
+  <div id="sheet" class="hide"></div>
 </section>
+<div class="pop hide" id="pop" role="dialog" aria-label="Card details"></div>
 
 <details class="adv">
   <summary>Lookup table &amp; offline use</summary>
@@ -303,6 +353,7 @@ function loadMap(){
   catch(e){persist=false;return{};}
 }
 function saveMap(){
+  flushInfo();
   if(!persist)return;
   try{localStorage.setItem(KEY,JSON.stringify(MAP));}catch(e){persist=false;stat();}
 }
@@ -323,6 +374,40 @@ function stat(){
   const n=Object.keys(MAP).length;
   $('mapStat').textContent=n+' card'+(n===1?'':'s')+' known · '+(persist?'saved on this device':'memory only (private mode?)');
 }
+
+/* card details (text, stats) live in IndexedDB rather than the lookup
+   table — they're ~20x bigger and would crowd out localStorage and bloat
+   the exported file. INFO: passcode -> details, filled on demand */
+let INFO={},PENDING={};
+const idb=(()=>{let p;return()=>p||(p=new Promise((ok,no)=>{
+  try{
+    const r=indexedDB.open('deckoder',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('info');
+    r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);
+  }catch(e){no(e);}
+}));})();
+function details(c){
+  return{type:c.type||'',race:c.race||'',attr:c.attribute||'',typeline:c.typeline||null,desc:c.desc||'',
+    atk:c.atk,def:c.def,level:c.level,link:c.linkval,markers:c.linkmarkers||null,scale:c.scale};
+}
+function learn(pass,c){INFO[pass]=PENDING[pass]=details(c);}
+async function flushInfo(){
+  const batch=PENDING;PENDING={};
+  if(!Object.keys(batch).length)return;
+  try{const st=(await idb()).transaction('info','readwrite').objectStore('info');for(const p in batch)st.put(batch[p],+p);}
+  catch(e){}
+}
+async function loadInfo(ids){
+  const need=ids.filter(p=>!INFO[p]);
+  if(!need.length)return;
+  try{
+    const st=(await idb()).transaction('info').objectStore('info');
+    await Promise.all(need.map(p=>new Promise(ok=>{
+      const r=st.get(+p);r.onsuccess=()=>{if(r.result)INFO[p]=r.result;ok();};r.onerror=()=>ok();
+    })));
+  }catch(e){}
+}
+function clearInfo(){INFO={};PENDING={};idb().then(db=>db.transaction('info','readwrite').objectStore('info').clear()).catch(()=>{});}
 
 /* ============================================================
    helpers
@@ -417,27 +502,46 @@ function kind(card){
 }
 function index(cards){
   cards.forEach(c=>{
+    /* keep a hand-entered cid if the API has none for this card */
     const cid=(c.misc_info||[]).map(m=>m.konami_id).find(v=>v!=null);
-    remember(c.id,cid,c.name,kind(c));
-    (c.card_images||[]).forEach(img=>{if(img.id!==c.id)remember(img.id,cid,c.name,kind(c));});
+    const ids=[c.id,...(c.card_images||[]).map(img=>img.id).filter(id=>id!==c.id)];
+    ids.forEach(id=>{remember(id,cid??MAP[id]?.cid,c.name,kind(c));learn(id,c);});
   });
 }
-/* by passcode — batched, bisecting around IDs the API doesn't know */
-async function byPasscodes(ids){
-  const need=[...new Set(ids)].filter(id=>!MAP[id]);
-  const bad=[];
+/* by passcode — batched, bisecting around IDs the API doesn't know.
+   A network failure stops it: bisecting can't help when nothing answers */
+async function fetchPasscodes(need){
+  const bad=[];let down=false;
   async function go(list){
     if(!list.length)return;
+    if(down){bad.push(...list);return;}
     try{index(await api('?misc=yes&id='+list.join(',')));}
     catch(e){
+      if(e instanceof TypeError){down=true;bad.push(...list);return;}
       if(list.length===1){bad.push(list[0]);return;}
       const m=Math.ceil(list.length/2);
       await go(list.slice(0,m));await go(list.slice(m));
     }
   }
   for(let i=0;i<need.length;i+=60)await go(need.slice(i,i+60));
+  bad.down=down;
+  return bad;
+}
+async function byPasscodes(ids){
+  const bad=await fetchPasscodes([...new Set(ids)].filter(id=>!MAP[id]));
   saveMap();stat();
   return bad;
+}
+/* details for cards already in the lookup table — from IndexedDB, else
+   the API. Misses are remembered so a re-render doesn't ask again */
+const NOINFO=new Set();
+async function ensureInfo(ids){
+  await loadInfo(ids);
+  const miss=ids.filter(p=>!INFO[p]&&!NOINFO.has(p));
+  if(!miss.length)return;
+  const bad=await fetchPasscodes(miss);
+  if(!bad.down)bad.forEach(p=>NOINFO.add(p));
+  saveMap();
 }
 /* by Konami cid — one request each, small concurrency */
 async function byCids(cids){
@@ -564,6 +668,8 @@ function render(){
     '<span>UNIQUE <b>'+new Set([...RESULT.deck.main,...RESULT.deck.extra,...RESULT.deck.side]).size+'</b></span>';
   $('resnote').textContent=RESULT.name;
   renderSheet();
+  renderDeck();
+  setView(RESULT.unresolved.length?'list':VIEW,true);   /* fixes are typed in the list */
 }
 const COLOR={Monsters:'var(--monster)',Spells:'var(--spell)',Traps:'var(--trap)',Extra:'var(--extra)',Side:'var(--side)'};
 function renderSheet(){
@@ -616,6 +722,148 @@ function renderSheet(){
     });
   });
 }
+
+/* ============================================================
+   card art — YGOPRODeck asks that each image be pulled once and
+   stored, and blacklists IPs that pull fast. Their images carry a
+   31-day cache lifetime, so the browser's own cache does the storing;
+   this queue keeps first-time pulls to ten a second. Art loaded in the
+   last 30 days skips the queue, since it comes from that cache.
+   ============================================================ */
+const ART='https://images.ygoprodeck.com/images/cards_small/';
+const SEEN_KEY='deckoder.art.v1',FRESH=30*864e5;
+let SEEN={},seenT=null;
+try{SEEN=JSON.parse(localStorage.getItem(SEEN_KEY))||{};}catch(e){}
+for(const p in SEEN)if(Date.now()-SEEN[p]>FRESH)delete SEEN[p];
+function saveSeen(){
+  clearTimeout(seenT);
+  seenT=setTimeout(()=>{try{localStorage.setItem(SEEN_KEY,JSON.stringify(SEEN));}catch(e){}},500);
+}
+const ARTQ=new Map();   /* passcode -> [img] waiting their turn */
+let artT=null;
+function art(img,pass){
+  img.onload=()=>{img.classList.add('in');if(!SEEN[pass]){SEEN[pass]=Date.now();saveSeen();}};
+  img.onerror=()=>img.remove();          /* leaves the name tile showing */
+  if(SEEN[pass]){img.src=ART+pass+'.jpg';return;}
+  if(!ARTQ.has(pass))ARTQ.set(pass,[]);
+  ARTQ.get(pass).push(img);              /* copies share one request */
+  if(!artT)artT=setInterval(()=>{
+    const next=ARTQ.entries().next().value;
+    if(!next){clearInterval(artT);artT=null;return;}
+    ARTQ.delete(next[0]);
+    next[1].forEach(i=>i.src=ART+next[0]+'.jpg');
+  },100);
+}
+
+/* ============================================================
+   deck view
+   ============================================================ */
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderDeck(){
+  const d=RESULT.deck;
+  const rank=p=>{const i=TYPES.indexOf(MAP[p]?.type);return i<0?9:i;};
+  const expand=(ids,sort)=>{
+    const t=tally(ids);
+    if(sort)t.sort((a,b)=>rank(a.id)-rank(b.id));
+    return t.flatMap(({id,qty})=>Array(qty).fill(id));
+  };
+  const tile=(p,color)=>{
+    const m=p&&MAP[p],nm=m?m.name:'Not found';
+    return'<button type="button" class="ct'+(m&&m.cid?'':' bad')+'" style="--c:'+color+'" data-p="'+(p||0)+'" aria-label="'+esc(nm)+'">'
+      +'<span class="fb">'+esc(nm)+'</span>'+(m?'<img alt="" data-p="'+p+'">':'')+'</button>';
+  };
+  const sect=(title,color,ids,sub,extra)=>!ids.length?'':
+    '<div class="sect"><div class="sect-h" style="--c:'+color+'"><b>'+title+'</b><span>'+ids.length+' card'+(ids.length===1?'':'s')+(sub?' · '+sub:'')+'</span></div>'
+    +'<div class="dgrid">'+ids.map(p=>tile(p,extra?COLOR.Extra:COLOR[MAP[p]?.type]||COLOR.Side)).join('')+'</div></div>';
+  const main=expand(d.main,true);
+  const n=(k,w)=>{const c=main.filter(p=>MAP[p]?.type===k).length;return c+' '+w+(c===1?'':'s');};
+  $('deck').innerHTML=
+     sect('Main deck','var(--ink)',main,n('Monsters','monster')+' · '+n('Spells','spell')+' · '+n('Traps','trap'))
+    +sect('Extra deck',COLOR.Extra,expand(d.extra),'',true)
+    +sect('Side deck',COLOR.Side,expand(d.side,true));
+  ARTQ.clear();
+  $('deck').querySelectorAll('img[data-p]').forEach(img=>art(img,+img.dataset.p));
+  hidePop();
+  ensureInfo([...new Set([...d.main,...d.extra,...d.side])].filter(p=>MAP[p]))
+    .then(()=>{if(POP.tile)showPop(POP.tile,POP.pinned);});
+}
+
+/* ---------- details popover: hover or focus shows it, click pins it ---------- */
+const POP={tile:null,pinned:false};
+const HOVER=matchMedia('(hover:hover)'),SHEET=matchMedia('(max-width:600px)');
+function cardText(p){
+  const m=MAP[p],i=INFO[p];
+  if(!m)return{tl:'',st:'',tx:'This card couldn’t be matched. Switch to the check list to type its ID.'};
+  if(!i)return{tl:m.type,st:'',tx:'Card text isn’t stored on this device yet. It loads the next time you’re online.'};
+  const num=v=>v==null?'':v<0?'?':v;
+  if(m.type!=='Monsters'){
+    const t=i.type.replace(/ Card$/,'');
+    return{tl:(i.race?i.race+' ':'')+t,st:'',tx:i.desc};
+  }
+  const tl=[i.attr,
+    i.link!=null?'Link-'+i.link:i.level!=null?(/xyz/i.test(i.type)?'Rank ':'Level ')+i.level:'',
+    i.scale!=null?'Scale '+i.scale:''].filter(Boolean).join(' · ');
+  const kinds=i.typeline||[i.race,...i.type.replace(/ Monster$/,'').split(' ')];
+  const st=i.link!=null?'ATK '+num(i.atk)+(i.markers?' · '+i.markers.join(', '):'')
+                       :'ATK '+num(i.atk)+' / DEF '+num(i.def);
+  return{tl:tl+' · ['+kinds.join(' / ')+']',st,tx:i.desc};
+}
+function showPop(t,pin){
+  const p=+t.dataset.p,m=MAP[p],pop=$('pop'),img=t.querySelector('img.in'),c=cardText(p);
+  POP.tile=t;POP.pinned=!!pin;
+  pop.style.setProperty('--c',t.style.getPropertyValue('--c'));
+  pop.innerHTML=
+     '<div class="art">'+(img?'<img alt="" src="'+img.src+'">':'<span class="fb">'+esc(m?m.name:'Not found')+'</span>')+'</div>'
+    +'<div class="pb"><h3>'+esc(m?m.name:'Not found')+'</h3>'
+    +(c.tl?'<div class="tl">'+esc(c.tl)+'</div>':'')
+    +(c.st?'<div class="st">'+esc(c.st)+'</div>':'')
+    +'<div class="tx">'+esc(c.tx)+'</div>'
+    +(m?'<div class="ids">Passcode '+p+(m.cid?' · CardDatabaseId '+m.cid:'')+'</div>':'')+'</div>'
+    +'<button type="button" class="x" aria-label="Close">×</button>';
+  pop.classList.toggle('pinned',POP.pinned);
+  pop.classList.remove('hide');
+  place();
+}
+function hidePop(){POP.tile=null;POP.pinned=false;$('pop').classList.add('hide');}
+function place(){
+  const pop=$('pop'),t=POP.tile;
+  if(!t||SHEET.matches)return;
+  const r=t.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight,g=10;
+  let x=r.right+g;
+  if(x+w>innerWidth-8)x=r.left-g-w;
+  if(x<8)x=Math.max(8,innerWidth-8-w);
+  pop.style.left=x+'px';
+  pop.style.top=Math.max(8,Math.min(r.top,innerHeight-8-h))+'px';
+}
+const deckEl=$('deck');
+deckEl.addEventListener('mouseover',e=>{const t=e.target.closest('.ct');if(t&&HOVER.matches&&!POP.pinned&&t!==POP.tile)showPop(t);});
+deckEl.addEventListener('mouseout',e=>{const t=e.target.closest('.ct');if(t&&!POP.pinned&&!t.contains(e.relatedTarget))hidePop();});
+deckEl.addEventListener('focusin',e=>{const t=e.target.closest('.ct');if(t&&t!==POP.tile)showPop(t);});
+deckEl.addEventListener('focusout',e=>{if(!POP.pinned&&!deckEl.contains(e.relatedTarget))hidePop();});
+deckEl.addEventListener('click',e=>{
+  const t=e.target.closest('.ct');if(!t)return;
+  if(t.classList.contains('bad')){setView('list');$('sheet').querySelector('input[data-fix]')?.focus();return;}
+  if(POP.pinned&&POP.tile===t)hidePop();else showPop(t,true);
+});
+$('pop').addEventListener('click',e=>{if(e.target.closest('.x'))hidePop();});
+document.addEventListener('click',e=>{if(POP.pinned&&!e.target.closest('#pop,.ct'))hidePop();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hidePop();});
+addEventListener('scroll',()=>{if(POP.pinned)place();else if(POP.tile)hidePop();},{passive:true});
+addEventListener('resize',place);
+
+/* ---------- deck / check list toggle ---------- */
+let VIEW='deck';
+try{VIEW=localStorage.getItem('deckoder.view')||'deck';}catch(e){}
+function setView(v,auto){
+  $('deck').classList.toggle('hide',v!=='deck');
+  $('sheet').classList.toggle('hide',v!=='list');
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
+  $('sheetTitle').textContent=v==='deck'?'3 · Deck':'3 · Card-by-card check';
+  $('sheetNote').textContent=v==='deck'?(HOVER.matches?'hover a card for details':'tap a card for details'):'verify names before you register';
+  hidePop();
+  if(!auto){VIEW=v;try{localStorage.setItem('deckoder.view',v);}catch(e){}}
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 /* ============================================================
    wiring
@@ -672,7 +920,7 @@ $('mapFile').onchange=e=>{
                 catch(err){say('That file isn’t a lookup table.');}};
   r.readAsText(f);
 };
-$('clearMap').onclick=()=>{MAP={};REV=null;saveMap();try{localStorage.removeItem(KEY)}catch(e){};stat();say('Lookup table cleared.','ok');};
+$('clearMap').onclick=()=>{MAP={};REV=null;clearInfo();saveMap();try{localStorage.removeItem(KEY)}catch(e){};stat();say('Lookup table cleared.','ok');};
 $('loadAll').onclick=async()=>{
   const b=$('loadAll');b.disabled=true;b.textContent='Downloading…';
   say('Downloading the full card database. This is a large file — give it a minute.','work');
