@@ -24,16 +24,16 @@ Card text and art are not in the exported table. Both are kept by the browser th
 
 Static, no build step. `index.html` runs from `file://` by double-clicking, or from any web server.
 
-Deployed at **https://deckoder.reizu.dev**.
+Deployed at **https://deckoder.reizu.dev**. Every push to `main` deploys through `.github/workflows/pages.yml`, which publishes the repo root as-is. It can also be run by hand from the Actions tab.
 
 Setup, once per project:
 
 1. **Verify `reizu.dev` on your GitHub account** — profile → Settings → Pages → Add a domain. Add the `_github-pages-challenge-<user>` TXT record it gives you, then Verify. Do this before pointing any DNS, so nobody else can claim a `reizu.dev` subdomain on Pages.
 2. **DNS** — one CNAME record: name `deckoder`, target `<user>.github.io`. No A records; those are only for apex domains. If Cloudflare, keep it **DNS Only** (grey cloud) until the certificate issues.
-3. **Repo** — Settings → Pages → Source: Deploy from a branch, `main`, `/ (root)`, then set Custom domain to `deckoder.reizu.dev`.
+3. **Repo** — Settings → Pages → Source: **GitHub Actions**, then set Custom domain to `deckoder.reizu.dev`.
 4. **Enforce HTTPS** — tick it once it stops being greyed out. Not optional: `.dev` is HSTS-preloaded, so the site is unreachable until the certificate is live.
 
-The `CNAME` file in this folder holds the domain, so it survives redeploys. `.nojekyll` stops Pages running the files through Jekyll.
+With an Actions deploy, the custom domain lives in the repo's Pages settings, and Pages ignores the `CNAME` file. It's kept so the domain is recorded with the code. Actions deploys don't run Jekyll, so no `.nojekyll` is needed.
 
 ## Files
 
@@ -45,8 +45,8 @@ The `CNAME` file in this folder holds the domain, so it survives redeploys. `.no
 | `icon-180.png` | `apple-touch-icon`, iOS home screen |
 | `icon-192.png`, `icon-512.png` | Web app manifest icons |
 | `site.webmanifest` | Makes it installable to a phone home screen |
-| `.nojekyll` | Stops Pages running the files through Jekyll |
-| `CNAME` | Custom domain for GitHub Pages (`deckoder.reizu.dev`) |
+| `.github/workflows/pages.yml` | Deploys to GitHub Pages on every push to `main` |
+| `CNAME` | Records the custom domain (`deckoder.reizu.dev`); the live setting is in the repo's Pages settings |
 
 The favicon is also embedded in `index.html` as a data URI, so the single file keeps its icon even if you move it somewhere without the PNGs.
 
