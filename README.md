@@ -8,13 +8,17 @@ The awkward part isn't the file formats, it's the identifiers. A `.ydk` file lis
 
 Drop a `.ydk`, paste a `ydke://` URI, or drop a registration `.json`. Deckoder detects the direction and gives you all three formats back, with copy and download buttons for each.
 
-Section 3 lists every card with its resolved name — check a few before you register. Anything that can't be matched is flagged in red with a box to type the correct ID into; Deckoder remembers what you enter.
+Section 3 shows the deck as card art, grouped into main, extra and side. Hover a card (or tap it on a phone) for its text and stats; click to keep the details open.
+
+Switch section 3 to **Check list** to see every card with its resolved name — check a few before you register. Anything that can't be matched is flagged in red with a box to type the correct ID into; Deckoder remembers what you enter. If anything is unmatched, the check list opens automatically.
 
 ## Offline use
 
 Every card Deckoder resolves is stored in a local lookup table. Under **Lookup table & offline use** you can export that table to a file and reimport it elsewhere.
 
 Do one conversion at home and hit **Export lookup table** before an event. The page then works with no network at all — worth doing before a tournament laptop meets venue wifi.
+
+Card text and art are not in the exported table. Both are kept by the browser that fetched them, so open the deck view once on the event laptop itself while it's online. Card text is stored in IndexedDB until you clear the table. Art lives in the browser's HTTP cache for about a month. Offline, any card whose art isn't cached shows as a coloured tile with its name.
 
 ## Hosting
 
@@ -49,7 +53,8 @@ The favicon is also embedded in `index.html` as a data URI, so the single file k
 ## Notes
 
 - Card data comes from the [YGOPRODeck API](https://ygoprodeck.com/api-guide/). Passcode lookups are batched into one request per deck; Konami-ID lookups (JSON → YDK) are one request per card, with a full-database fallback if that endpoint isn't available.
-- Alternate-art passcodes resolve to the same card.
+- Alternate-art passcodes resolve to the same card, and the deck view shows that passcode's own art.
+- Card art is loaded from `images.ygoprodeck.com`. YGOPRODeck asks that each image be fetched once and stored, and blocks IPs that fetch fast. Their images are cacheable for 31 days, so the browser cache does the storing, and first-time fetches are queued at ten a second. Their image server sends no CORS headers, so the page can't copy the images into its own storage.
 - Main deck is split into `Monsters` / `Spells` / `Traps` using the card type from the API, since a `.ydk` doesn't record it. `Extra` and `Side` stay flat, matching the registration format.
 - Deck size is checked as you go (main 40–60, extra ≤15, side ≤15).
 - Nothing is uploaded anywhere. The only network traffic is card lookups.
